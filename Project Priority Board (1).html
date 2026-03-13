@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Project Priority Board — Kave</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #ffffff;
+    --bg-secondary: #f5f5f3;
+    --bg-tertiary: #f0ede6;
+    --text-primary: #1a1a18;
+    --text-secondary: #6b6b68;
+    --border: rgba(0,0,0,0.12);
+    --border-strong: rgba(0,0,0,0.22);
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1a;
+      --bg-secondary: #262624;
+      --bg-tertiary: #2e2c28;
+      --text-primary: #f0ede6;
+      --text-secondary: #9a9893;
+      --border: rgba(255,255,255,0.1);
+      --border-strong: rgba(255,255,255,0.2);
+    }
+  }
+  body { font-family: var(--font); background: var(--bg-secondary); color: var(--text-primary); min-height: 100vh; }
+  .app { max-width: 860px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+  /* HOME */
+  .home { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 4rem 1.5rem; min-height: 60vh; }
+  .home-title { font-size: 24px; font-weight: 500; color: var(--text-primary); margin-bottom: 20px; text-align: center; letter-spacing: -0.01em; }
+  .kave-logo { font-size: 38px; font-weight: 400; color: #1a1a18; letter-spacing: -0.02em; font-family: var(--font); background: #f0ede6; padding: 10px 28px; border-radius: var(--radius-md); margin-bottom: 3rem; line-height: 1; }
+  .home-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: 100%; max-width: 420px; }
+  .home-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 1.75rem 1rem; border: 0.5px solid var(--border-strong); border-radius: var(--radius-lg); background: var(--bg); cursor: pointer; transition: background 0.15s; text-align: center; }
+  .home-btn:hover { background: var(--bg-secondary); }
+  .home-btn .icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .icon-list { background: #E6F1FB; }
+  .icon-add { background: #E1F5EE; }
+  .btn-label { font-size: 15px; font-weight: 500; color: var(--text-primary); }
+  .btn-desc { font-size: 12px; color: var(--text-secondary); }
+  .project-count { font-size: 12px; color: var(--text-secondary); margin-top: 2rem; }
+
+  /* PAGE HEADER */
+  .page-header { display: flex; align-items: center; gap: 12px; padding-bottom: 1rem; border-bottom: 0.5px solid var(--border); margin-bottom: 1.5rem; }
+  .back-btn { width: 32px; height: 32px; border: 0.5px solid var(--border-strong); border-radius: var(--radius-md); background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .back-btn:hover { background: var(--bg-secondary); }
+  .page-title { font-size: 17px; font-weight: 500; color: var(--text-primary); }
+
+  /* FORM */
+  .card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; margin-bottom: 1.5rem; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field.full { grid-column: 1 / -1; }
+  label { font-size: 11px; color: var(--text-secondary); font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; }
+  input { width: 100%; height: 38px; padding: 0 12px; border: 0.5px solid var(--border-strong); border-radius: var(--radius-md); background: var(--bg); color: var(--text-primary); font-size: 14px; font-family: var(--font); }
+  input:focus { outline: none; box-shadow: 0 0 0 2px rgba(55,138,221,0.25); border-color: #378ADD; }
+  .toggle { display: flex; border: 0.5px solid var(--border-strong); border-radius: var(--radius-md); overflow: hidden; }
+  .toggle button { flex: 1; height: 38px; border: none; background: transparent; color: var(--text-secondary); font-size: 13px; cursor: pointer; font-family: var(--font); }
+  .toggle button.on { background: #1D9E75; color: #E1F5EE; font-weight: 500; }
+  .submit-btn { margin-top: 16px; width: 100%; height: 42px; border: none; border-radius: var(--radius-md); background: #185FA5; color: #E6F1FB; font-size: 14px; font-weight: 500; cursor: pointer; font-family: var(--font); }
+  .submit-btn:hover { background: #0C447C; }
+  .error { font-size: 12px; color: #A32D2D; margin-top: 8px; display: none; }
+  .save-status { font-size: 11px; color: var(--text-secondary); text-align: right; margin-top: 6px; min-height: 16px; }
+
+  /* LIST */
+  .weights-bar { display: flex; gap: 8px; margin-bottom: 1.25rem; flex-wrap: wrap; }
+  .wbadge { font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 500; }
+  .w1 { background: #E1F5EE; color: #0F6E56; }
+  .w2 { background: #E6F1FB; color: #185FA5; }
+  .w3 { background: #FAEEDA; color: #854F0B; }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; min-width: 560px; }
+  th { font-size: 11px; font-weight: 500; color: var(--text-secondary); text-align: left; padding: 8px 10px; border-bottom: 0.5px solid var(--border); letter-spacing: 0.04em; white-space: nowrap; }
+  td { font-size: 13px; color: var(--text-primary); padding: 11px 10px; border-bottom: 0.5px solid var(--border); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  .top-row td { background: rgba(24,95,165,0.04); }
+  .rank-num { font-size: 12px; font-weight: 500; color: var(--text-secondary); }
+  .rank-1 { font-size: 13px; color: #185FA5; font-weight: 500; }
+  .mono { font-family: var(--font-mono); font-size: 12px; color: var(--text-secondary); }
+  .cap-yes { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 500; background: #E1F5EE; color: #0F6E56; }
+  .cap-no { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 11px; background: var(--bg-secondary); color: var(--text-secondary); }
+  .bar-wrap { display: flex; align-items: center; gap: 8px; }
+  .bar-bg { flex: 1; height: 3px; background: var(--border); border-radius: 2px; min-width: 40px; }
+  .bar-fill { height: 3px; border-radius: 2px; background: #378ADD; }
+  .score-num { font-size: 13px; font-weight: 500; color: var(--text-primary); min-width: 26px; text-align: right; }
+  .del { width: 28px; height: 28px; border: none; background: none; color: var(--text-secondary); cursor: pointer; border-radius: 4px; font-size: 14px; }
+  .del:hover { background: var(--bg-secondary); }
+  .empty-state { text-align: center; padding: 3rem 1rem; color: var(--text-secondary); font-size: 14px; }
+  .empty-cta { margin-top: 14px; padding: 8px 20px; border: 0.5px solid var(--border-strong); border-radius: var(--radius-md); background: transparent; color: var(--text-primary); font-size: 13px; cursor: pointer; display: inline-block; font-family: var(--font); }
+  .empty-cta:hover { background: var(--bg-secondary); }
+  .add-more-btn { margin-top: 14px; width: 100%; height: 38px; border: 0.5px solid var(--border); border-radius: var(--radius-md); background: transparent; color: var(--text-secondary); font-size: 13px; cursor: pointer; font-family: var(--font); }
+  .add-more-btn:hover { background: var(--bg-secondary); color: var(--text-primary); }
+  .score-legend { display: flex; gap: 16px; margin-top: 14px; padding-top: 14px; border-top: 0.5px solid var(--border); flex-wrap: wrap; }
+  .leg-item { font-size: 11px; color: var(--text-secondary); }
+  .leg-item span { font-weight: 500; color: var(--text-primary); }
+
+  .hidden { display: none; }
+
+  @media (max-width: 520px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .field.full { grid-column: 1; }
+    .home-actions { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HOME -->
+  <div id="screen-home" class="home">
+    <p class="home-title">Project Priority Board</p>
+    <div class="kave-logo">Kave</div>
+    <div class="home-actions">
+      <div class="home-btn" onclick="go('list')">
+        <div class="icon icon-list">📋</div>
+        <span class="btn-label">See list</span>
+        <span class="btn-desc">View all projects ranked by priority</span>
+      </div>
+      <div class="home-btn" onclick="go('add')">
+        <div class="icon icon-add">＋</div>
+        <span class="btn-label">Add project</span>
+        <span class="btn-desc">Enter a new project and its data</span>
+      </div>
+    </div>
+    <p class="project-count" id="home-count"></p>
+  </div>
+
+  <!-- ADD -->
+  <div id="screen-add" class="hidden">
+    <div class="page-header">
+      <button class="back-btn" onclick="go('home')">←</button>
+      <span class="page-title">Add a project</span>
+    </div>
+    <div class="card">
+      <div class="form-grid">
+        <div class="field">
+          <label>Project code</label>
+          <input type="text" id="f-code" placeholder="e.g. FRN-024" />
+        </div>
+        <div class="field">
+          <label>Project name</label>
+          <input type="text" id="f-name" placeholder="e.g. Oslo Dining Chair" />
+        </div>
+        <div class="field">
+          <label>Communication capsule</label>
+          <div class="toggle">
+            <button class="on" id="btn-yes" onclick="setCap(true)">Yes</button>
+            <button id="btn-no" onclick="setCap(false)">No</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Launch target date</label>
+          <input type="date" id="f-date" />
+        </div>
+        <div class="field full">
+          <label>First year forecast (€)</label>
+          <input type="number" id="f-forecast" placeholder="e.g. 250000" min="0" />
+        </div>
+      </div>
+      <p class="error" id="err">Please enter a project code and name.</p>
+      <button class="submit-btn" onclick="addProject()">Save project and see ranking</button>
+      <p class="save-status" id="save-status"></p>
+    </div>
+  </div>
+
+  <!-- LIST -->
+  <div id="screen-list" class="hidden">
+    <div class="page-header">
+      <button class="back-btn" onclick="go('home')">←</button>
+      <span class="page-title">Priority ranking</span>
+    </div>
+    <div class="weights-bar">
+      <span class="wbadge w1">Capsule — 35 pts</span>
+      <span class="wbadge w2">Launch date — 35 pts</span>
+      <span class="wbadge w3">Forecast — 30 pts</span>
+    </div>
+    <div class="card">
+      <div class="table-wrap" id="list-content"></div>
+      <div class="score-legend">
+        <div class="leg-item">Capsule: <span>Yes = 35 pts</span></div>
+        <div class="leg-item">Launch: <span>≤30d = 35 · ≤90d = 26 · ≤180d = 18 · ≤365d = 10 · &gt;1yr = 3</span></div>
+        <div class="leg-item">Forecast: <span>≥1M = 30 · ≥500k = 24 · ≥250k = 18 · ≥100k = 10 · &lt;100k = 4</span></div>
+      </div>
+    </div>
+    <button class="add-more-btn" onclick="go('add')">+ Add another project</button>
+  </div>
+
+</div>
+
+<script>
+  const STORAGE_KEY = 'kave-priority-projects';
+  let projects = [];
+  let capVal = true;
+
+  function loadProjects() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      projects = raw ? JSON.parse(raw) : [];
+    } catch(e) { projects = []; }
+    updateHomeCount();
+  }
+
+  function saveProjects() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+      const el = document.getElementById('save-status');
+      if (el) { el.textContent = 'Saved'; setTimeout(() => { el.textContent = ''; }, 2000); }
+    } catch(e) {
+      const el = document.getElementById('save-status');
+      if (el) el.textContent = 'Could not save';
+    }
+  }
+
+  function updateHomeCount() {
+    const el = document.getElementById('home-count');
+    if (!el) return;
+    el.textContent = projects.length === 0 ? 'No projects yet' : `${projects.length} project${projects.length === 1 ? '' : 's'} saved`;
+  }
+
+  function go(screen) {
+    ['home','add','list'].forEach(s => {
+      document.getElementById('screen-' + s).classList.toggle('hidden', s !== screen);
+    });
+    if (screen === 'list') renderList();
+    if (screen === 'home') updateHomeCount();
+  }
+
+  function setCap(v) {
+    capVal = v;
+    document.getElementById('btn-yes').className = v ? 'on' : '';
+    document.getElementById('btn-no').className = !v ? 'on' : '';
+  }
+
+  function scoreCapsule(c) { return c ? 35 : 0; }
+  function scoreLaunch(d) {
+    if (!d) return 0;
+    const days = (new Date(d) - new Date()) / 86400000;
+    if (days <= 30) return 35;
+    if (days <= 90) return 26;
+    if (days <= 180) return 18;
+    if (days <= 365) return 10;
+    return 3;
+  }
+  function scoreForecast(f) {
+    if (f >= 1000000) return 30;
+    if (f >= 500000) return 24;
+    if (f >= 250000) return 18;
+    if (f >= 100000) return 10;
+    return 4;
+  }
+  function score(p) {
+    return scoreCapsule(p.capsule) + scoreLaunch(p.date) + scoreForecast(p.forecast || 0);
+  }
+  function fmtDate(d) {
+    if (!d) return '—';
+    return new Date(d).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'});
+  }
+  function fmtEur(n) {
+    if (!n && n !== 0) return '—';
+    return '€' + Number(n).toLocaleString();
+  }
+
+  function addProject() {
+    const code = document.getElementById('f-code').value.trim();
+    const name = document.getElementById('f-name').value.trim();
+    const date = document.getElementById('f-date').value;
+    const forecast = parseFloat(document.getElementById('f-forecast').value);
+    const err = document.getElementById('err');
+    if (!code || !name) { err.style.display = 'block'; return; }
+    err.style.display = 'none';
+    projects.push({ id: Date.now().toString(), code, name, capsule: capVal, date, forecast: isNaN(forecast) ? 0 : forecast });
+    saveProjects();
+    document.getElementById('f-code').value = '';
+    document.getElementById('f-name').value = '';
+    document.getElementById('f-date').value = '';
+    document.getElementById('f-forecast').value = '';
+    setCap(true);
+    go('list');
+  }
+
+  function delProject(id) {
+    projects = projects.filter(p => p.id !== id);
+    saveProjects();
+    renderList();
+    updateHomeCount();
+  }
+
+  function renderList() {
+    const container = document.getElementById('list-content');
+    const sorted = [...projects].sort((a, b) => score(b) - score(a));
+    if (!sorted.length) {
+      container.innerHTML = `<div class="empty-state">No projects yet.<br><button class="empty-cta" onclick="go('add')">Add your first project</button></div>`;
+      return;
+    }
+    container.innerHTML = `<table>
+      <thead><tr>
+        <th style="width:36px">#</th>
+        <th style="width:80px">Code</th>
+        <th>Name</th>
+        <th style="width:72px">Capsule</th>
+        <th style="width:100px">Launch</th>
+        <th style="width:112px">Forecast</th>
+        <th style="width:120px">Score / 100</th>
+        <th style="width:32px"></th>
+      </tr></thead>
+      <tbody>${sorted.map((p, i) => {
+        const sc = score(p);
+        return `<tr class="${i === 0 ? 'top-row' : ''}">
+          <td><span class="${i === 0 ? 'rank-1' : 'rank-num'}">${i + 1}</span></td>
+          <td class="mono">${p.code}</td>
+          <td>${p.name}</td>
+          <td><span class="${p.capsule ? 'cap-yes' : 'cap-no'}">${p.capsule ? 'Yes' : 'No'}</span></td>
+          <td style="font-size:12px;color:var(--text-secondary)">${fmtDate(p.date)}</td>
+          <td style="font-size:12px;color:var(--text-secondary)">${fmtEur(p.forecast)}</td>
+          <td><div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="width:${sc}%"></div></div><span class="score-num">${sc}</span></div></td>
+          <td><button class="del" onclick="delProject('${p.id}')">✕</button></td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>`;
+  }
+
+  loadProjects();
+</script>
+</body>
+</html>
